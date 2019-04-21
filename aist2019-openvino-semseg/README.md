@@ -2,7 +2,8 @@
 
 ## Запуск решения
 
-**Командная строка**
+**Командная строка для запуска решения**
+```bash
 python semseg_inference.py \
     -i <path_to_image>/<image_name> \
     -m <path_to_model>/<model_name>.xml -w <path_to_weights>/<model_name>.bin \

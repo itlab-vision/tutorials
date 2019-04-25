@@ -96,8 +96,9 @@ def segmentation_output(res, color_map, log):
             classes_color_map.append([int(x) for x in line.split()])
 
     log.info('Creating segmented images')
+    result_images = []
     for batch, data in enumerate(res):
-        classes_map = np.zeros(shape = (h, w, c), dtype = np.int)
+        classes_map = np.zeros(shape=(h, w, c), dtype=np.int)
         for i in range(h):
             for j in range(w):
                 if len(data[:, i, j]) == 1:
@@ -107,12 +108,22 @@ def segmentation_output(res, color_map, log):
                 classes_map[i, j, :] = classes_color_map[min(pixel_class, 20)]
         out_img = os.path.join(os.path.dirname(__file__), 
                     'out_segmentation_{}.bmp'.format(batch))
+        result_images.append(out_img)
         cv2.imwrite(out_img, classes_map)
         log.info('Result image was saved to {}'.format(out_img))
+    return result_images
+
+def size2origin(input_images, output_images):
+    for i in range(len(input_images)):
+        original_image = cv2.imread(input_images[i])
+        result_image = cv2.imread(output_images[i])
+        height, width = original_image.shape[:-1]
+        result_image = cv2.resize(result_image, (width, height))
+        cv2.imwrite(output_images[i], result_image)
 
 def main():
-    log.basicConfig(format = '[ %(levelname)s ] %(message)s',
-        level = log.INFO, stream = sys.stdout)
+    log.basicConfig(format='[ %(levelname)s ] %(message)s',
+        level=log.INFO, stream=sys.stdout)
     args = build_argparser().parse_args()
     try:
         net, plugin = prepare_model(args.model, args.weights,
@@ -123,13 +134,16 @@ def main():
         images = convert_image(net, data, log)
 
         log.info('Loading model to the plugin')
-        exec_net = plugin.load(network = net)
+        exec_net = plugin.load(network=net)
 
         log.info('Starting inference')
         res = infer_sync(images, exec_net, net)
 
         log.info('Processing model output')
-        segmentation_output(res, args.color_map, log)
+        res_images = segmentation_output(res, args.color_map, log)
+
+        log.info('Resize output images to origin size')
+        size2origin(data, res_images)
 
         log.info('Free memory')
         del net

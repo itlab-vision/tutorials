@@ -36,7 +36,7 @@ def prepare_model(model, weights, cpu_extension, device, plugin_dirs, log):
 
     log.info('Creating plugin object for inference')
     plugin = IEPlugin(device=device, plugin_dirs=plugin_dirs)
-    if cpu_extension and 'CPU' in device:	
+    if cpu_extension and 'CPU' in device:
         plugin.add_cpu_extension(cpu_extension)
 
     log.info('Loading network files:\n\t{}\n\t{}'.format(model_xml, model_bin))
